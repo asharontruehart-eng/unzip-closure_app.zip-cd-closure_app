@@ -1,4 +1,63 @@
-# This workflow uses actions that are not certified by GitHub.
+# CodeQL Advanced — updated triggers and suggestions
+name: "CodeQL Advanced"
+
+on:
+  push:
+    # Use your repo default branch name (e.g., main). Adjust as needed.
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '19 16 * * 6'
+  # Allow manual runs from the Actions UI
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: actions
+            build-mode: none
+          # Add the languages in your repo here, for example:
+          - language: javascript-typescript
+            build-mode: auto
+          - language: python
+            build-mode: auto
+          # For compiled languages, consider build-mode: manual and add build steps below
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          # queries: security-extended,security-and-quality
+
+      - name: Run manual build steps
+        if: matrix.build-mode == 'manual'
+        shell: bash
+        run: |
+          echo 'Add build commands here for compiled languages (e.g., mvn -DskipTests package, ./gradlew assemble, make build)'
+          exit 1
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          # category is optional; you can use a simpler label
+          category: "language:${{ matrix.language }}"# This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
 # documentation.
